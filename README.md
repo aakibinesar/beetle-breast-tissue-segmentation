@@ -21,32 +21,32 @@ The best score needs the organisers' model. **My own models alone never beat the
 - No external data. Slides named after TCGA cases were left out of training. Splits are by patient.
 
 ## 2. Models (`src/`, `kernels/`)
-| name | backbone | what was trained | training data | test score (alone) |
-|---|---|---|---|---|
-| v2 | Phikon ViT-B/16 (Owkin) | last 4 blocks + light CNN-skip decoder; stage 1 on 72 slides, stage 2 on 154 | 154 slides, 26,343 patches | 0.8388 |
-| v3 | same, continued | stain (H&E) jitter in optical-density space | 218 slides | 0.8240 |
-| pv2 | Phikon-v2 (DINOv2 ViT-L/16) | last 6 of 24 blocks + same decoder; stain jitter | 218 slides | 0.8269 |
-| pv2abl | Phikon-v2 | ablation of pv2: original 154 slides, no jitter | 154 slides, 26,343 patches | never submitted alone |
-| pv2big | Phikon-v2 | last 6 of 24 blocks; no jitter; original 154 slides plus 113 further slides | 43,772 patches | 0.8464 |
+| model | backbone | what was trained | training data | test score (alone) | name in the code |
+|---|---|---|---|---|---|
+| Phikon ViT-B | Phikon ViT-B/16 (Owkin) | last 4 blocks + light CNN-skip decoder; stage 1 on 72 slides, stage 2 on 154 | 154 slides, 26,343 patches | 0.8388 | v2 |
+| Phikon ViT-B + jitter | same, continued | stain (H&E) jitter in optical-density space | 218 slides | 0.8240 | v3 |
+| Phikon-v2 + jitter | Phikon-v2 (DINOv2 ViT-L/16) | last 6 of 24 blocks + same decoder; stain jitter | 218 slides | 0.8269 | pv2 |
+| Phikon-v2, 154 slides | Phikon-v2 | same as Phikon-v2 + jitter, but the original 154 slides and no jitter (an ablation) | 154 slides, 26,343 patches | not submitted alone | pv2abl |
+| Phikon-v2, extra slides | Phikon-v2 | last 6 of 24 blocks; no jitter; original 154 slides plus 113 further slides | 43,772 patches | 0.8464 | pv2big |
 
 - **Patches:** 512 px at 0.5 µm/px, class-balanced centres per slide for training; a patient-disjoint validation set of 23 slides (1,715 patches) for model selection.
-- **Training:** AdamW, cosine schedule, fp16; a class-rarity sampler; backbone learning rate 3e-5 (with a delay for the large model). The checkpoint was chosen by mean per-class Dice on the validation set (for v3 and pv2 together with a held-out stain-shift set).
+- **Training:** AdamW, cosine schedule, fp16; a class-rarity sampler; backbone learning rate 3e-5 (with a delay for the large model). The checkpoint was chosen by mean per-class Dice on the validation set (for the two models with stain jitter, together with a held-out stain-shift set).
 - **Inference:** overlapping 512 px windows (stride 256, cosine taper), four-fold flip/rotation averaging, arg-max over the four classes.
 - **Organisers' model:** the released 5-fold nnU-Net ensemble from the BEETLE repository, run by me on Kaggle (`kernels/22_infer`); I did not train it. With flip averaging its score was 0.8667, so flip averaging changes nothing measurable.
 - **Ensembles and blends:** per-pixel class probabilities are saved as uint8 and averaged on CPU (`ensemble/`). Weights were fixed in advance. Saved probabilities reproduce the submitted zips on at least 99.985% of pixels.
 
 ## 3. What I found
-- **Validation did not predict the test.** In-distribution validation mean-class Dice went from 0.851 (v2) to 0.912 (pv2big), but the own-only test scores stayed between 0.824 and 0.846.
-- **Averaging two own models helped; four did not.** v2 + pv2: 0.8459; v2 + v3 + pv2 + pv2abl: 0.8429. Equal weights on weaker members cost a little.
-- **The extra data did not change the overall score, but changed its profile.** pv2big (113 further slides) scored 0.8464 against 0.8459 for the earlier two-model average, a difference far below what 170 regions can resolve. Compared with that average it is much better on necrosis (0.6123 against 0.5342) and a little better on the Biopticka centre (0.8335 against 0.8209) and on invasive tumour (+0.011), and worse on the UWMed centre (-0.018), non-invasive epithelium (-0.012) and other tissue (-0.005).
-- **Stain jitter did not help.** v3 scored lower than v2 at all three centres.
-- **Where we lose:** v2 was better than the organisers' model on necrosis (+0.040), on the UWMed centre (+0.029) and on ILC invasive tumour (+0.017), and worse on the Biopticka centre (-0.080) and on NST invasive tumour (-0.050). So most of the gap is one centre, which fits a domain shift.
+- **Validation did not predict the test.** In-distribution validation mean-class Dice went from 0.851 (Phikon ViT-B) to 0.912 (Phikon-v2, extra slides), but the own-only test scores stayed between 0.824 and 0.846.
+- **Averaging two own models helped; four did not.** The average of Phikon ViT-B and Phikon-v2 + jitter scored 0.8459; the average of four own models (adding Phikon ViT-B + jitter and Phikon-v2, 154 slides) scored 0.8429. Equal weights on weaker members cost a little.
+- **The extra data did not change the overall score, but changed its profile.** Phikon-v2, extra slides (113 further slides) scored 0.8464 against 0.8459 for the earlier two-model average, a difference far below what 170 regions can resolve. Compared with that average it is much better on necrosis (0.6123 against 0.5342) and a little better on the Biopticka centre (0.8335 against 0.8209) and on invasive tumour (+0.011), and worse on the UWMed centre (-0.018), non-invasive epithelium (-0.012) and other tissue (-0.005).
+- **Stain jitter did not help.** Phikon ViT-B + jitter scored lower than Phikon ViT-B at all three centres.
+- **Where we lose:** Phikon ViT-B was better than the organisers' model on necrosis (+0.040), on the UWMed centre (+0.029) and on ILC invasive tumour (+0.017), and worse on the Biopticka centre (-0.080) and on NST invasive tumour (-0.050). So most of the gap is one centre, which fits a domain shift.
 - **Stain statistics (weak support, not proof):** the test regions are farther in colour statistics from the nearest training slide (median 0.66) than training slides are from each other (0.43). The per-region correlation with disagreement with the organisers is weak (Spearman 0.18).
-- **Agreement with the organisers' predictions is not a reliable proxy.** Phikon-v2 agreed most with them (0.870 of pixels, against 0.864 for v2) and scored lower than v2 (0.8269 against 0.8388), so the leaderboard is the only measurement I trust.
-- **Blends:** a 50/50 blend with the organisers' model adds +0.002 (v2 alone), +0.009 (average of v2 and pv2) and +0.017 (pv2big) over their model alone. A blend with the organisers at 70% scored 0.8789; I do not use it as a headline because my model carries less than half.
+- **Agreement with the organisers' predictions is not a reliable proxy.** Phikon-v2 + jitter agreed most with them (0.870 of pixels, against 0.864 for Phikon ViT-B) and scored lower than Phikon ViT-B (0.8269 against 0.8388), so the leaderboard is the only measurement I trust.
+- **Blends:** a 50/50 blend with the organisers' model adds +0.002 (Phikon ViT-B alone), +0.009 (Phikon ViT-B and Phikon-v2 + jitter, 25% each) and +0.017 (Phikon-v2, extra slides) over their model alone. A blend with the organisers at 70% scored 0.8789; I do not use it as a headline because my model carries less than half.
 
 ### The last blend (submission 12)
-Submission 12 is 50% pv2big + 50% the organisers' nnU-Net (0.8839). pv2big is the Phikon-v2 model trained on the original 154 slides plus 113 further development slides, without stain jitter. Alone it scored 0.8464: higher than each of my earlier single models (v2 0.8388, v3 0.8240, Phikon-v2 with jitter 0.8269) and 0.0005 above the average of two models (0.8459), which is within noise. I chose it for the blend because of a rule I fixed before submitting it: if it scored above 0.8459 alone, blend it 50/50 with the organisers' model. The blend is 0.0173 above the organisers alone (0.8666) and 0.0086 above the earlier 25/25/50 blend (0.8753). It is above the organisers' model in every class and at every centre: necrosis +0.122, non-invasive epithelium +0.063, invasive epithelium +0.050, other tissue +0.002; Biopticka +0.013, SCDC +0.009, UWMed +0.032.
+Submission 12 is 50% Phikon-v2 (extra slides) + 50% the organisers' nnU-Net (0.8839). That Phikon-v2 model was trained on the original 154 slides plus 113 further development slides, without stain jitter. Alone it scored 0.8464: higher than each of my earlier single models (Phikon ViT-B 0.8388, Phikon ViT-B + jitter 0.8240, Phikon-v2 + jitter 0.8269) and 0.0005 above the average of two models (0.8459), which is within noise. I chose it for the blend because of a rule I fixed before submitting it: if it scored above 0.8459 alone, blend it 50/50 with the organisers' model. The blend is 0.0173 above the organisers alone (0.8666) and 0.0086 above the earlier 25/25/50 blend (0.8753). It is above the organisers' model in every class and at every centre: necrosis +0.122, non-invasive epithelium +0.063, invasive epithelium +0.050, other tissue +0.002; Biopticka +0.013, SCDC +0.009, UWMed +0.032.
 
 ## 4. Limits
 - 170 regions from three centres: differences of about 0.01 or less should not be read as real. I did not estimate confidence intervals.
