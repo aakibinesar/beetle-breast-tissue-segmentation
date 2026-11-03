@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+out*/
+*.zip
+*.npz
+*.pt
+*.log
+kernel-metadata.json
+*.pdf
+.env
+kaggle.json

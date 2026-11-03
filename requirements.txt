@@ -1,0 +1,8 @@
+# Notebook runs used the Kaggle image (torch 2.x, transformers) on a T4; the nnU-Net blend notebooks pip-install nnunetv2 inside the notebook.
+numpy
+pillow
+torch
+transformers
+timm
+opencv-python-headless
+tifffile
