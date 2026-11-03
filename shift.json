@@ -1,0 +1,26 @@
+{
+ "patients": [
+  25,
+  51,
+  87,
+  100,
+  107,
+  173,
+  181,
+  185,
+  199,
+  216,
+  219,
+  223,
+  224,
+  225,
+  227,
+  233,
+  251,
+  303,
+  306
+ ],
+ "n_slides": 21,
+ "n_patches": 3377,
+ "rule": "new patients, NN stain distance >= ROI median 0.66, <= 25% of new patches"
+}
