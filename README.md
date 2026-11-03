@@ -38,11 +38,12 @@ The best score needs the organisers' model. **My own models alone never beat the
 ## 3. What I found
 - **Validation did not predict the test.** In-distribution validation mean-class Dice went from 0.851 (v2) to 0.912 (pv2big), but the own-only test scores stayed between 0.824 and 0.846.
 - **Averaging two own models helped; four did not.** v2 + pv2: 0.8459; v2 + v3 + pv2 + pv2abl: 0.8429. Equal weights on weaker members cost a little.
-- **The extra data did not help on the test.** pv2big (113 further slides) scored 0.8464 against 0.8459 for the earlier two-model average. The difference is far below what 170 regions can resolve.
+- **The extra data did not change the overall score, but changed its profile.** pv2big (113 further slides) scored 0.8464 against 0.8459 for the earlier two-model average, a difference far below what 170 regions can resolve. Compared with that average it is much better on necrosis (0.6123 against 0.5342) and a little better on the Biopticka centre (0.8335 against 0.8209) and on invasive tumour (+0.011), and worse on the UWMed centre (-0.018), non-invasive epithelium (-0.012) and other tissue (-0.005).
 - **Stain jitter did not help.** v3 scored lower than v2 at all three centres.
 - **Where we lose:** v2 was better than the organisers' model on necrosis (+0.040), on the UWMed centre (+0.029) and on ILC invasive tumour (+0.017), and worse on the Biopticka centre (-0.080) and on NST invasive tumour (-0.050). So most of the gap is one centre, which fits a domain shift.
 - **Stain statistics (weak support, not proof):** the test regions are farther in colour statistics from the nearest training slide (median 0.66) than training slides are from each other (0.43). The per-region correlation with disagreement with the organisers is weak (Spearman 0.18).
 - **Proxies failed twice.** Agreement of my predictions with the organisers' predictions ordered the models wrongly (Phikon-v2 agreed most and scored lower than v2), so I treat the leaderboard as the only measurement.
+- **The final blend (#12) is above the organisers' model alone (#1) in every class and at every centre listed:** necrosis +0.122, non-invasive epithelium +0.063, invasive epithelium +0.050, other tissue +0.002; Biopticka +0.013, SCDC +0.009, UWMed +0.032; ILC invasive +0.065, NST invasive +0.044.
 - **Blends:** averaging with the organisers' model adds +0.009 to +0.017 over their model alone when my side carries half the weight (0.8753, 0.8839). A blend with the organisers at 70% scored 0.8789; I do not use it as a headline because my models carry less than half.
 
 ### The last blend (submission 12)
