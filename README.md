@@ -1,19 +1,18 @@
-# BEETLE breast-tissue segmentation: pathology foundation models and a blend with the organisers' nnU-Net
+# BEETLE breast-tissue segmentation: pathology foundation models, ensembles and a blend with the organisers' nnU-Net
 
 Code and write-up for my entries to [BEETLE](https://beetle.grand-challenge.org/) (Grand Challenge): 4-class tissue segmentation (other, non-invasive epithelium, invasive epithelium, necrosis) on 170 hidden H&E regions from three centres. The leaderboard metric is `overall_dice`.
 
-**Status: ongoing.** This version lists the results up to 2026-10-24 (submissions 1 to 6). I have made 12 submissions in total; the later ones are added to [RESULTS.md](RESULTS.md) in a later update, and the README is revised then.
+**Status: ongoing.** Last updated 2026-11-03 (submission quota used up). New results are appended to [RESULTS.md](RESULTS.md); this README is rewritten only when the conclusions change.
 
-**Results listed so far (public leaderboard, hidden test set)**
+**Results so far (public leaderboard, hidden test set)**
 
 | entry | overall_dice |
 |---|---|
 | organisers' released nnU-Net 5-fold ensemble, run by me, no training | 0.8666 |
-| my model v2 alone (Phikon ViT-B) | 0.8388 |
-| my model v3 alone (v2 continued with stain jitter) | 0.8240 |
-| 50% v2 + 50% the organisers' nnU-Net | 0.8684 |
+| my own models alone (single models and averages, see RESULTS.md) | 0.8240 to 0.8464 |
+| **50% my model (Phikon-v2) + 50% the organisers' nnU-Net** | **0.8839** |
 
-A blend with the organisers' model at 70% scored 0.8789; I do not use it as a headline because my model carries less than half. **None of my own models alone beats the organisers' reproduced result.** The blend weights were fixed before any score was seen and were not tuned on the leaderboard.
+The best score needs the organisers' model. **My own models alone never beat the organisers' reproduced result**; the best of them reaches 0.8464. The blend weights were fixed before any score was seen, and I did not tune them on the leaderboard. I made 12 submissions in total (all listed in RESULTS.md).
 
 ## 1. Task and constraints
 - Train on the public BEETLE development set (Zenodo, CC BY-NC-SA 4.0); the 170 evaluation regions (about 2048 to 2560 px) have hidden labels, so every test number comes from uploading a zip of label PNGs.
@@ -26,26 +25,33 @@ A blend with the organisers' model at 70% scored 0.8789; I do not use it as a he
 |---|---|---|---|---|
 | v2 | Phikon ViT-B/16 (Owkin) | last 4 blocks + light CNN-skip decoder; stage 1 on 72 slides, stage 2 on 154 | 154 slides, 26,343 patches | 0.8388 |
 | v3 | same, continued | stain (H&E) jitter in optical-density space | 218 slides | 0.8240 |
-
-The repository also contains the Phikon-v2 (DINOv2 ViT-L/16) module and trainer; their results are added in a later update.
+| pv2 | Phikon-v2 (DINOv2 ViT-L/16) | last 6 of 24 blocks + same decoder; stain jitter | 218 slides | 0.8269 |
+| pv2abl | Phikon-v2 | ablation of pv2: original 154 slides, no jitter | 154 slides, 26,343 patches | never submitted alone |
+| pv2big | Phikon-v2 | last 6 of 24 blocks; no jitter; original 154 slides plus 113 further slides | 43,772 patches | 0.8464 |
 
 - **Patches:** 512 px at 0.5 µm/px, class-balanced centres per slide for training; a patient-disjoint validation set of 23 slides (1,715 patches) for model selection.
-- **Training:** AdamW, cosine schedule, fp16; a class-rarity sampler; backbone learning rate 3e-5. The checkpoint was chosen by mean per-class Dice on the validation set (for v3 together with a held-out stain-shift set).
+- **Training:** AdamW, cosine schedule, fp16; a class-rarity sampler; backbone learning rate 3e-5 (with a delay for the large model). The checkpoint was chosen by mean per-class Dice on the validation set (for v3 and pv2 together with a held-out stain-shift set).
 - **Inference:** overlapping 512 px windows (stride 256, cosine taper), four-fold flip/rotation averaging, arg-max over the four classes.
 - **Organisers' model:** the released 5-fold nnU-Net ensemble from the BEETLE repository, run by me on Kaggle (`kernels/22_infer`); I did not train it. With flip averaging its score was 0.8667, so flip averaging changes nothing measurable.
-- **Blends:** per-pixel class probabilities of my model and of the organisers' model are averaged with weights fixed in advance, then an arg-max is taken (`kernels/50_blend`, `ensemble/`).
+- **Ensembles and blends:** per-pixel class probabilities are saved as uint8 and averaged on CPU (`ensemble/`). Weights were fixed in advance. Saved probabilities reproduce the submitted zips on at least 99.985% of pixels.
 
 ## 3. What I found
-- **Validation did not predict the test.** v3 had a higher in-distribution validation score than v2 (mean-class Dice 0.862 against 0.851) and a lower test score (0.8240 against 0.8388).
+- **Validation did not predict the test.** In-distribution validation mean-class Dice went from 0.851 (v2) to 0.912 (pv2big), but the own-only test scores stayed between 0.824 and 0.846.
+- **Averaging two own models helped; four did not.** v2 + pv2: 0.8459; v2 + v3 + pv2 + pv2abl: 0.8429. Equal weights on weaker members cost a little.
+- **The extra data did not help on the test.** pv2big (113 further slides) scored 0.8464 against 0.8459 for the earlier two-model average. The difference is far below what 170 regions can resolve.
 - **Stain jitter did not help.** v3 scored lower than v2 at all three centres.
 - **Where we lose:** v2 was better than the organisers' model on necrosis (+0.040), on the UWMed centre (+0.029) and on ILC invasive tumour (+0.017), and worse on the Biopticka centre (-0.080) and on NST invasive tumour (-0.050). So most of the gap is one centre, which fits a domain shift.
 - **Stain statistics (weak support, not proof):** the test regions are farther in colour statistics from the nearest training slide (median 0.66) than training slides are from each other (0.43). The per-region correlation with disagreement with the organisers is weak (Spearman 0.18).
-- **The two models complement each other.** The 50/50 blend is above the organisers' model alone by only +0.002; the 30/70 blend by +0.012.
+- **Proxies failed twice.** Agreement of my predictions with the organisers' predictions ordered the models wrongly (Phikon-v2 agreed most and scored lower than v2), so I treat the leaderboard as the only measurement.
+- **Blends:** averaging with the organisers' model adds +0.009 to +0.017 over their model alone when my side carries half the weight (0.8753, 0.8839). A blend with the organisers at 70% scored 0.8789; I do not use it as a headline because my models carry less than half.
+
+### The last blend (submission 12)
+Submission 12 is 50% pv2big + 50% the organisers' nnU-Net (0.8839). pv2big is the Phikon-v2 model trained on the original 154 slides plus 113 further development slides, without stain jitter. Alone it scored 0.8464: higher than each of my earlier single models (v2 0.8388, v3 0.8240, Phikon-v2 with jitter 0.8269) and 0.0005 above my best own-only result so far (the average of two models, 0.8459), which is within noise. I used it for the blend because of a rule I fixed before submitting it: if it scored above 0.8459 alone, blend it 50/50 with the organisers' model. The weights were not tried on the leaderboard. The blend is 0.0173 above the organisers alone (0.8666) and 0.0086 above the earlier 25/25/50 blend (0.8753). My model carries half of the weight, but the organisers' model is part of the result.
 
 ## 4. Limits
 - 170 regions from three centres: differences of about 0.01 or less should not be read as real. I did not estimate confidence intervals.
-- "Best of N" is optimistic: 12 submissions in total, of which 6 are listed in this version.
-- The blends contain the organisers' released model; my own models alone score below it.
+- "Best of N" is optimistic: 12 submissions in total, all in RESULTS.md.
+- The headline number is a blend that contains the organisers' released model. My own models alone reach 0.846.
 - I used part of the 396 development slides and no external data; free-tier compute limited training to a few epochs per model. Top entries on the leaderboard score higher.
 
 ## 5. Repository layout
@@ -60,10 +66,10 @@ The repository also contains the Phikon-v2 (DINOv2 ViT-L/16) module and trainer;
 | `kernels/50_blend`, `65_blend_pv2`, `ensemble/` | blends with the organisers' model; CPU ensembling from saved probabilities |
 | `kernels/34_check`, `35_scale`, `37_maskstats`, `51_stain`, `52_stain2`, `53_priors`, `63_pv2check` | data checks and the stain / class-prior analyses |
 | `select_shift.py`, `shift.json` | the held-out stain-shift patients |
-| `RESULTS.md` | submissions with date and weights |
+| `RESULTS.md` | every submission, with date and weights |
 
 ## 6. Reproducing
-Set `KAGGLE_USER`, then generate a notebook, for example the ViT-B trainer: `cd kernels/32_train && ./build.sh <name> ...` (the header of each `build.sh` lists its arguments), and push it with `kaggle kernels push -p kernels/32_train --accelerator NvidiaTeslaT4`. The notebooks read the slides and the organisers' model from Zenodo and from earlier notebook outputs; adapt the slugs to your account. Weights and probabilities are not included.
+Set `KAGGLE_USER`, then generate a notebook, for example the Phikon-v2 trainer: `cd kernels/62_train_pv2 && ./build.sh <name> ...` (the header of each `build.sh` lists its arguments), and push it with `kaggle kernels push -p kernels/62_train_pv2 --accelerator NvidiaTeslaT4`. The notebooks read the slides and the organisers' model from Zenodo and from earlier notebook outputs; adapt the slugs to your account. Weights and probabilities are not included.
 
 ## 7. Data and licence note
 BEETLE data and the organisers' model belong to the organisers (CC BY-NC-SA 4.0) and are not included. Phikon and Phikon-v2 are used under Owkin's non-commercial licence. No data, weights or probabilities are redistributed here.
