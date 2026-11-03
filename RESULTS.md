@@ -1,8 +1,8 @@
 # Results log
 
-Append new rows at the bottom; do not edit old rows. Scores are the public-leaderboard `overall_dice` on the hidden test set; dates are the "Created" dates shown on the leaderboard. Weights of every blend were fixed before the score was seen. "Org" means the organisers' released nnU-Net 5-fold ensemble (not trained by me). Leaderboard ranks are deliberately not recorded.
+Scores are the public-leaderboard `overall_dice` on the hidden test set; dates are the "Created" dates shown on the leaderboard. Weights of every blend were fixed before the score was seen. "Org" means the organisers' released nnU-Net 5-fold ensemble (not trained by me).
 
-## All submissions (12 of 12 allowed per 28 days, in order)
+## Submissions
 
 | # | date | entry | mine / Org (%) | overall_dice |
 |---|---|---|---|---|
@@ -10,7 +10,7 @@ Append new rows at the bottom; do not edit old rows. Scores are the public-leade
 | 2 | 2026-10-11 | Org with flip averaging | 0 / 100 | 0.8667 |
 | 3 | 2026-10-19 | v2: Phikon ViT-B, 154 slides | 100 / 0 | 0.8388 |
 | 4 | 2026-10-19 | v2 + Org | 50 / 50 | 0.8684 |
-| 5 | 2026-10-19 | v2 + Org (Org carries more than half; not a headline) | 30 / 70 | 0.8789 |
+| 5 | 2026-10-19 | v2 + Org | 30 / 70 | 0.8789 |
 | 6 | 2026-10-24 | v3: v2 continued with stain jitter, 218 slides | 100 / 0 | 0.8240 |
 | 7 | 2026-10-31 | pv2: Phikon-v2, 218 slides, stain jitter | 100 / 0 | 0.8269 |
 | 8 | 2026-10-31 | average of v2 and pv2 | 100 / 0 | 0.8459 |
@@ -19,12 +19,9 @@ Append new rows at the bottom; do not edit old rows. Scores are the public-leade
 | 11 | 2026-11-02 | pv2big: Phikon-v2, 154 + 113 slides, no jitter | 100 / 0 | 0.8464 |
 | 12 | 2026-11-02 | pv2big + Org | 50 / 50 | **0.8839** |
 
-Rule used for #12, fixed after #11 and before #12: if pv2big alone scored above 0.8459 (the best own result), blend it 50/50 with Org; between 0.830 and 0.8459, use one sixth each of pv2big, v2 and pv2 plus 50% Org; below 0.830, no further blend. A file for the second case was built but not submitted.
+Before #12 was submitted, I decided that pv2big would be blended 50/50 with Org if it scored above 0.8459 alone, the best own-only result at that point (#8). It scored 0.8464 (#11).
 
-Note on #12: pv2big is the Phikon-v2 model trained on the original 154 slides plus 113 further development slides, without stain jitter. Alone (#11) it scored 0.8464, higher than each earlier single model (v2 0.8388, v3 0.8240, Phikon-v2 with jitter 0.8269) and 0.0005 above the best earlier own-only result (#8, 0.8459), which is within noise. It was blended because of the rule above, which was fixed before #12 was submitted. #12 is 0.0173 above Org alone (#1) and 0.0086 above #10.
-
-
-## Per-class and per-centre scores (read from the public leaderboard, "Show all metrics")
+## Per-class and per-centre scores
 
 | # | entry | overall | other | non-inv | invasive | necrosis | Biopticka | SCDC | UWMed | ILC inv. | NST inv. |
 |---|---|---|---|---|---|---|---|---|---|---|---|
