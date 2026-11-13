@@ -46,7 +46,7 @@ In #13 and #14 each evaluation region's tissue colour was shifted and scaled in 
 
 Biopticka, SCDC and UWMed are the three centres of the test set. ILC is invasive lobular carcinoma and NST is invasive carcinoma of no special type.
 
-## Validation (patient-disjoint, 1,715 patches; in-distribution, did not predict the test)
+## Validation (23 slides, 1,715 patches; in-distribution, did not predict the test)
 
 | model | mean-class Dice | overall | necrosis |
 |---|---|---|---|
@@ -55,6 +55,8 @@ Biopticka, SCDC and UWMed are the three centres of the test set. ILC is invasive
 | Phikon-v2 + jitter (selected epoch) | 0.890 | 0.943 | 0.706 |
 | Phikon-v2, 154 slides | 0.883 | 0.939 | n/a |
 | Phikon-v2, extra slides (epoch 2 of 3) | 0.912 | 0.956 | 0.774 |
+
+The last row is slightly optimistic: one of the 23 validation slides (`patient247_wsi1`) was also among the 113 extra training slides of that model. Its test score is not affected.
 
 ## Compute
 

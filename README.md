@@ -14,7 +14,7 @@ I fine-tuned pathology foundation models (Phikon ViT-B and Phikon-v2) for this t
 I made 14 submissions in total; all are listed in [RESULTS.md](RESULTS.md).
 
 ## 1. Task and constraints
-- **Data:** the public BEETLE development set (Zenodo, CC BY-NC-SA 4.0). The full development set has 587 slides, of which 396 are in the public download; my models used between 154 and 267 of them, split by patient, with no external data and no slides named after TCGA cases.
+- **Data:** the public BEETLE development set (Zenodo, CC BY-NC-SA 4.0). The full development set has 587 annotated slides; the Zenodo download contains the images of 396 of them, and the rest come from public datasets (TIGER and TCGA) that need separate downloads, which I did not use. My models used between 154 and 267 of the 396, split by patient, with no data from outside the BEETLE development set and no slides named after TCGA cases.
 - **Evaluation:** the 170 evaluation regions (about 2048 to 2560 px) have hidden labels, so every test number comes from uploading a zip of label images (at most 12 uploads per 28 days).
 - **Compute:** Kaggle's free tier (T4 GPUs, about 30 GPU hours per week, 12 hours per session). Slides are read inside Kaggle notebooks by HTTP range request, so the 120 GB of slides never touch my disk.
 
@@ -30,13 +30,13 @@ I made 14 submissions in total; all are listed in [RESULTS.md](RESULTS.md).
 | Phikon-v2, extra slides | Phikon-v2, last 6 blocks, no jitter | 154 + 113 further slides, 43,772 patches | 0.8464 | pv2big |
 | Phikon-v2, extra slides + colour matching | same model, colour-matched at test time (below) | same | 0.8480 | pv2big, notebook `67_probs_norm` |
 
-- **Training:** 512 px patches at 0.5 µm/px, class-balanced centres per slide, a class-rarity sampler, AdamW with a cosine schedule in fp16. The checkpoint was chosen by mean per-class Dice on a patient-disjoint validation set of 23 slides.
+- **Training:** 512 px patches at 0.5 µm/px, class-balanced centres per slide, a class-rarity sampler, AdamW with a cosine schedule in fp16. The checkpoint was chosen by mean per-class Dice on a validation set of 23 slides, split from the training slides by patient. For the final model, one of those 23 slides (`patient247_wsi1`) was also among its 113 extra training slides, so that model's validation figures are slightly optimistic; its test score is not affected.
 - **Inference:** overlapping 512 px windows with a cosine taper, four-fold flip and rotation averaging, arg-max over the four classes. Class probabilities are saved so that ensembles can be built on CPU afterwards (`ensemble/`).
 
 **Ensembling at three levels, and why.** Averaging predictions helps when the members make different mistakes.
 - *Within one model:* four-fold flip and rotation averaging. On the organisers' model it changed nothing measurable (0.8667 against 0.8666).
 - *Between my own models:* averaging Phikon ViT-B and Phikon-v2 + jitter gave 0.8459, above either alone (0.8388 and 0.8269). Averaging four models gave 0.8429: the two added models were weaker and made similar mistakes, so they diluted the better ones.
-- *With the organisers' nnU-Net:* Phikon ViT-B was better than the organisers' model on necrosis (+0.040), on the UWMed centre (+0.029) and on ILC invasive tumour (+0.017), and worse on the Biopticka centre (-0.080), so I expected complementary errors. The 50/50 blend scores above both sides. Against the organisers alone it adds +0.113 on necrosis, +0.065 on non-invasive and +0.061 on invasive epithelium, and +0.017, +0.004 and +0.033 at the three centres (Biopticka, SCDC, UWMed). The organisers trained on the BEETLE development set, which has 587 slides against the 396 in the public download, so part of the gain may be information my models never saw; I could not test that.
+- *With the organisers' nnU-Net:* Phikon ViT-B was better than the organisers' model on necrosis (+0.040), on the UWMed centre (+0.029) and on ILC invasive tumour (+0.017), and worse on the Biopticka centre (-0.080), so I expected complementary errors. The 50/50 blend scores above both sides. Against the organisers alone it adds +0.113 on necrosis, +0.065 on non-invasive and +0.061 on invasive epithelium, and +0.017, +0.004 and +0.033 at the three centres (Biopticka, SCDC, UWMed). The organisers trained on the BEETLE development set, which has 587 slides against the 396 whose images are in the Zenodo download, so part of the gain may be information my models never saw; I did not test that.
 
 My model carries at least half of the weight in every blend, so that the result reflects its contribution, and the weights were fixed in advance, not tuned on the leaderboard.
 
@@ -48,9 +48,10 @@ My model carries at least half of the weight in every blend, so that the result 
 - **Ensemble members must differ and be strong.** The gain from blending grew with my model's quality but not in proportion: +0.002 with Phikon ViT-B, +0.009 with two models, +0.017 with Phikon-v2 on extra slides.
 
 ## 4. Constraints, and what I would do with more resources
-Constraints: free-tier compute limited every model to a few epochs; only 396 of the 587 development slides are public; I used no gated foundation models; and the test set has 170 regions from three centres, so differences of about 0.01 or less are not meaningful (I did not estimate confidence intervals).
+Constraints: free-tier compute limited every model to a few epochs; I used only the 396 slides whose images are in the Zenodo download; I used no gated foundation models; and the test set has 170 regions from three centres, so differences of about 0.01 or less are not meaningful (I did not estimate confidence intervals).
 
 With more resources I would:
+- add the remaining annotated slides from the public TIGER and TCGA datasets, to widen the scanners and stains in the training data;
 - fine-tune larger pathology foundation models (entries at the top of the leaderboard describe such models), with LoRA;
 - train on all development slides with patient-level cross-validation, which would also give out-of-fold predictions for learning the blend weights instead of fixing them;
 - address the stain and scanner shift directly, with stronger augmentation or per-centre normalisation, and train for longer;
