@@ -1,6 +1,6 @@
 # BEETLE breast-tissue segmentation: pathology foundation models and ensembling
 
-Code and write-up for my entries to [BEETLE](https://beetle.grand-challenge.org/) (Grand Challenge): four-class tissue segmentation (other, non-invasive epithelium, invasive epithelium, necrosis) on 170 hidden H&E regions from three centres. The metric is overall Dice (`overall_dice`). **Status: ongoing**, last updated 2026-11-13.
+Code and write-up for my entries to [BEETLE](https://beetle.grand-challenge.org/) (Grand Challenge): four-class tissue segmentation (other, non-invasive epithelium, invasive epithelium, necrosis) on 170 hidden H&E regions from three centres. The metric is overall Dice (`overall_dice`). **Status: ongoing**, last updated 2026-11-14. The next experiment is to add the remaining annotated development slides, whose images come from the public TIGER and TCGA datasets, to the training data and retrain the best model; it has not been started.
 
 ## Summary
 I fine-tuned pathology foundation models (Phikon ViT-B and Phikon-v2) for this task and combined predictions at three levels: flip and rotation averaging within each model, averaging between my models, and a 50/50 blend with the organisers' released nnU-Net. The blend scores 0.8843 overall Dice on the hidden test set, against 0.8666 for the organisers' model alone and 0.8480 for my best single model. The models make different mistakes (mine are stronger on necrosis and on one centre, theirs on another), which is why averaging them helps. Everything ran on Kaggle's free GPUs.
@@ -51,7 +51,6 @@ My model carries at least half of the weight in every blend, so that the result 
 Constraints: free-tier compute limited every model to a few epochs; I used only the 396 slides whose images are in the Zenodo download; I used no gated foundation models; and the test set has 170 regions from three centres, so differences of about 0.01 or less are not meaningful (I did not estimate confidence intervals).
 
 With more resources I would:
-- add the remaining annotated slides from the public TIGER and TCGA datasets, to widen the scanners and stains in the training data;
 - fine-tune larger pathology foundation models (entries at the top of the leaderboard describe such models), with LoRA;
 - train on all development slides with patient-level cross-validation, which would also give out-of-fold predictions for learning the blend weights instead of fixing them;
 - address the stain and scanner shift directly, with stronger augmentation or per-centre normalisation, and train for longer;
