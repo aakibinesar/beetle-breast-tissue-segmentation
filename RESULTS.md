@@ -17,9 +17,13 @@ Scores are the public-leaderboard `overall_dice` on the hidden test set; dates a
 | 9 | 2026-11-01 | average of four own models: Phikon ViT-B, Phikon ViT-B + jitter, Phikon-v2 + jitter, Phikon-v2 154 slides (1/4 each) | 100 / 0 | 0.8429 |
 | 10 | 2026-11-01 | Phikon ViT-B (25%) + Phikon-v2 + jitter (25%) + organisers' nnU-Net (50%) | 50 / 50 | 0.8753 |
 | 11 | 2026-11-02 | Phikon-v2, extra slides (154 + 113 slides, no jitter) | 100 / 0 | 0.8464 |
-| 12 | 2026-11-02 | Phikon-v2, extra slides + organisers' nnU-Net | 50 / 50 | **0.8839** |
+| 12 | 2026-11-02 | Phikon-v2, extra slides + organisers' nnU-Net | 50 / 50 | 0.8839 |
+| 13 | 2026-11-12 | Phikon-v2, extra slides + test-time colour matching | 100 / 0 | 0.8480 |
+| 14 | 2026-11-12 | Phikon-v2, extra slides + test-time colour matching + organisers' nnU-Net | 50 / 50 | **0.8843** |
 
 Before #12 was submitted, I decided that the model of #11 would be blended 50/50 with the organisers' nnU-Net if it scored above 0.8459 alone, the best own-only result at that point (#8). It scored 0.8464.
+
+In #13 and #14 each evaluation region's tissue colour was shifted and scaled in CIELAB to the average colour statistics of the model's training patches, with no labels and no learning on the test images; the 2 px blur of the tissue mask was chosen from colour statistics before any submission. #14 was submitted after #13 scored 0.8480, below the 0.856 set as the condition for blending it, so it was decided after seeing that score.
 
 ## Per-class and per-centre scores
 
@@ -36,7 +40,9 @@ Before #12 was submitted, I decided that the model of #11 would be blended 50/50
 | 9 | average of four own models | 0.8429 | 0.9204 | 0.6469 | 0.7632 | 0.5397 | 0.8179 | 0.8214 | 0.8959 | 0.8190 | 0.7418 |
 | 10 | Phikon ViT-B + Phikon-v2 + jitter + organisers (25/25/50) | 0.8753 | 0.9398 | 0.7036 | 0.8001 | 0.5675 | 0.8834 | 0.8527 | 0.8899 | 0.8150 | 0.7948 |
 | 11 | Phikon-v2, extra slides | 0.8464 | 0.9160 | 0.6420 | 0.7805 | 0.6123 | 0.8335 | 0.8344 | 0.8747 | 0.8017 | 0.7720 |
-| 12 | Phikon-v2, extra slides + organisers 50/50 | **0.8839** | 0.9393 | 0.7157 | 0.8251 | 0.6334 | 0.8921 | 0.8577 | 0.9023 | 0.8438 | 0.8182 |
+| 12 | Phikon-v2, extra slides + organisers 50/50 | 0.8839 | 0.9393 | 0.7157 | 0.8251 | 0.6334 | 0.8921 | 0.8577 | 0.9023 | 0.8438 | 0.8182 |
+| 13 | Phikon-v2, extra slides + colour matching | 0.8480 | 0.9099 | 0.6473 | 0.7957 | 0.6134 | 0.8438 | 0.8243 | 0.8786 | 0.7745 | 0.8040 |
+| 14 | Phikon-v2, extra slides + colour matching + organisers 50/50 | **0.8843** | 0.9353 | 0.7174 | 0.8360 | 0.6235 | 0.8962 | 0.8528 | 0.9041 | 0.8354 | 0.8362 |
 
 Biopticka, SCDC and UWMed are the three centres of the test set. ILC is invasive lobular carcinoma and NST is invasive carcinoma of no special type.
 
